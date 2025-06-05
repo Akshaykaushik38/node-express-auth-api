@@ -19,6 +19,10 @@ app.use(express.json());
 // Mount the user routes
 app.use('/api/users', require('./routes/userRoutes'));
 
+// Mount the post routes
+app.use('/api/posts', require('./routes/postRoutes'));
+
+
 // Define a simple route for GET /
 app.get('/', (req, res) => {
   res.send('Hello World! Your server is running.');

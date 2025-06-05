@@ -100,4 +100,53 @@ router.get('/profile', validateUser, (req, res) => {
   res.json(req.user);
 });
 
+// @route   PUT /api/users/profile/update
+// @desc    Update user profile
+// @access  Private
+router.put(
+  '/profile/update',
+  validateUser,
+  [
+    body('name', 'Name is required').optional().notEmpty(),
+    body('email', 'Valid email is required').optional().isEmail(),
+    body('password', 'Password must be at least 6 characters').optional().isLength({ min: 6 }),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+      const user = await User.findById(req.user.id);
+      if (!user) {
+        return res.status(404).json({ msg: 'User not found' });
+      }
+
+      const { name, email, password } = req.body;
+
+      if (name) user.name = name;
+      if (email) user.email = email;
+      if (password) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
+      }
+
+      const updatedUser = await user.save();
+
+      res.json({
+        msg: 'Profile updated successfully',
+        user: {
+          id: updatedUser._id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+        },
+      });
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send('Server error');
+    }
+  }
+);
+
 module.exports = router;
